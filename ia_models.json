@@ -1,0 +1,9 @@
+{
+  "version": "2026-04-27",
+  "_descripcion": "Registro publico de modelos IA recomendados por NETSOLIN. Cada API NETSOLIN consulta este JSON al arrancar y cada 6h via tarea programada 'sync_ia_models'. Solo se actualizan filas de ia_config con origen='netsolin' (no toca overrides del cliente). Cuando OpenRouter deprecia un modelo free, basta editar este archivo y commit; los clientes se ajustan solos.",
+  "openrouter": {
+    "basico":   { "modelo": "deepseek/deepseek-chat-v3.1:free", "max_tokens": 2048 },
+    "medio":    { "modelo": "deepseek/deepseek-chat-v3.1:free", "max_tokens": 4096 },
+    "avanzado": { "modelo": "deepseek/deepseek-chat-v3.1:free", "max_tokens": 8192 }
+  }
+}
