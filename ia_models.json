@@ -1,5 +1,5 @@
 {
-  "version": "2026-07-22.1",
+  "version": "2026-07-22.2",
   "_descripcion": "Registro publico de modelos IA recomendados por NETSOLIN. Cada API NETSOLIN consulta este JSON al arrancar y cada 6h via tarea programada 'sync_ia_models'. Solo se actualizan filas de ia_config con origen='netsolin' (no toca overrides del cliente). Cuando un proveedor deprecia un modelo, basta editar este archivo y commit; los clientes se ajustan solos.",
   "_notas": {
     "shape": "El registry usa la clave 'niveles' donde cada nivel define su propio provider. Permite mezclar providers entre niveles (ej: basico/medio en Gemini, avanzado en Anthropic).",
@@ -8,7 +8,8 @@
     "sin_key_del_provider": "Si un cliente no tiene la key del provider de un nivel, resolver_ia cae al provider por defecto de su config.json. No se rompe: degrada.",
     "criterio": "Mejor relacion costo/capacidad por nivel, no el modelo mas caro. Basico es alto volumen y prompts cortos (autofill, ayuda, glosas): el piso del mercado alcanza. Medio genera SQL y JSON que alimentan documentos: pesa la fiabilidad. Avanzado es Vision y razonamiento contable: pesa la calidad.",
     "cambio_2026_07_22": "Los cuatro modelos free de OpenRouter que usaba este registry (deepseek-chat-v3.1:free y los de FALLBACKS_FREE) fueron retirados por OpenRouter, dejando basico y medio caidos. Se pasa a Gemini de pago, que a este volumen cuesta centavos y no rota cada pocos meses. Los clientes que quieran seguir en free tienen el catalogo vigente en ia_nivel_service.FALLBACKS_FREE.",
-    "precio_sonnet_5": "claude-sonnet-5 esta a precio introductorio 2/10 USD por 1M tokens hasta el 2026-08-31; desde el 2026-09-01 pasa a 3/15. Revisar entonces si sigue siendo la mejor opcion para avanzado."
+    "precio_sonnet_5": "claude-sonnet-5 esta a precio introductorio 2/10 USD por 1M tokens hasta el 2026-08-31; desde el 2026-09-01 pasa a 3/15. Revisar entonces si sigue siendo la mejor opcion para avanzado.",
+    "por_que_todo_gemini": "Los tres niveles usan Gemini porque es la unica key que los clientes tienen configurada (gemini_api_key); anthropic_api_key esta vacia en todos los config.json revisados. Un nivel apuntando a un provider sin key degrada al fallback, asi que la mejor opcion 'en el papel' no sirve de nada. Ademas gemini-3.6-flash (1.50/7.50) es mas barato que claude-sonnet-5 (2.00/10.00, y 3.00/15.00 desde septiembre), es multimodal para OCR y trae grounding con busqueda web para el bloque de novedades."
   },
   "niveles": {
     "basico": {
@@ -27,12 +28,12 @@
       "_alternativa": "claude-haiku-4-5 (1.00 / 5.00) si se prefiere fiabilidad en la salida estructurada sobre el costo"
     },
     "avanzado": {
-      "provider": "anthropic",
-      "modelo": "claude-sonnet-5",
+      "provider": "gemini",
+      "modelo": "gemini-3.6-flash",
       "max_tokens": 8192,
-      "_precio_usd_1m": "2.00 / 10.00 (intro hasta 2026-08-31; luego 3.00 / 15.00)",
-      "_para": "OCR Vision de facturas y documentos de terceros, auditoria fiscal, cierre asistido, deteccion de anomalias, analisis de balance",
-      "_alternativa": "gemini-3.6-flash (1.50 / 7.50) cuando importe la busqueda web con grounding; claude-opus-4-8 (5.00 / 25.00) para lo mas critico"
+      "_precio_usd_1m": "1.50 / 7.50",
+      "_para": "OCR Vision de facturas y documentos de terceros, auditoria fiscal, cierre asistido, deteccion de anomalias, analisis de balance, novedades con busqueda web",
+      "_alternativa": "claude-sonnet-5 (2.00 / 10.00, sube a 3.00 / 15.00 el 2026-09-01) o claude-opus-4-8 (5.00 / 25.00) para lo mas critico, si el cliente configura anthropic_api_key"
     }
   }
 }
