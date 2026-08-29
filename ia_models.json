@@ -1,5 +1,5 @@
 {
-  "version": "2026-07-22.2",
+  "version": "2026-08-29",
   "_descripcion": "Registro publico de modelos IA recomendados por NETSOLIN. Cada API NETSOLIN consulta este JSON al arrancar y cada 6h via tarea programada 'sync_ia_models'. Solo se actualizan filas de ia_config con origen='netsolin' (no toca overrides del cliente). Cuando un proveedor deprecia un modelo, basta editar este archivo y commit; los clientes se ajustan solos.",
   "_notas": {
     "shape": "El registry usa la clave 'niveles' donde cada nivel define su propio provider. Permite mezclar providers entre niveles (ej: basico/medio en Gemini, avanzado en Anthropic).",
@@ -8,8 +8,9 @@
     "sin_key_del_provider": "Si un cliente no tiene la key del provider de un nivel, resolver_ia cae al provider por defecto de su config.json. No se rompe: degrada.",
     "criterio": "Mejor relacion costo/capacidad por nivel, no el modelo mas caro. Basico es alto volumen y prompts cortos (autofill, ayuda, glosas): el piso del mercado alcanza. Medio genera SQL y JSON que alimentan documentos: pesa la fiabilidad. Avanzado es Vision y razonamiento contable: pesa la calidad.",
     "cambio_2026_07_22": "Los cuatro modelos free de OpenRouter que usaba este registry (deepseek-chat-v3.1:free y los de FALLBACKS_FREE) fueron retirados por OpenRouter, dejando basico y medio caidos. Se pasa a Gemini de pago, que a este volumen cuesta centavos y no rota cada pocos meses. Los clientes que quieran seguir en free tienen el catalogo vigente en ia_nivel_service.FALLBACKS_FREE.",
-    "precio_sonnet_5": "claude-sonnet-5 esta a precio introductorio 2/10 USD por 1M tokens hasta el 2026-08-31; desde el 2026-09-01 pasa a 3/15. Revisar entonces si sigue siendo la mejor opcion para avanzado.",
-    "por_que_todo_gemini": "Los tres niveles usan Gemini porque es la unica key que los clientes tienen configurada (gemini_api_key); anthropic_api_key esta vacia en todos los config.json revisados. Un nivel apuntando a un provider sin key degrada al fallback, asi que la mejor opcion 'en el papel' no sirve de nada. Ademas gemini-3.6-flash (1.50/7.50) es mas barato que claude-sonnet-5 (2.00/10.00, y 3.00/15.00 desde septiembre), es multimodal para OCR y trae grounding con busqueda web para el bloque de novedades."
+    "por_que_todo_gemini": "Los tres niveles usan Gemini porque es la unica key que los clientes tienen configurada (gemini_api_key); anthropic_api_key esta vacia en todos los config.json revisados. Un nivel apuntando a un provider sin key degrada al fallback, asi que la mejor opcion 'en el papel' no sirve de nada. Ademas gemini-3.6-flash (1.50/7.50) es mas barato que claude-sonnet-5 (2.00/10.00, y 3.00/15.00 desde septiembre), es multimodal para OCR y trae grounding con busqueda web para el bloque de novedades.",
+    "cambio_2026_08_29": "Revision de precios contra ai.google.dev, developers.openai.com, docs.claude.com y openrouter.ai/api/v1/models. Dos ajustes: medio pasa de gemini-2.5-flash (0.30/2.50) a gemini-3.1-flash-lite (0.25/1.50), mas nuevo y mas barato; avanzado pasa de gemini-3.6-flash a gemini-3.7-flash (13/08/2026), mismo precio y generacion mas reciente, verificado disponible con la key de Gemini de los clientes. Ademas se corrige el precio de la linea 3.6/3.7: 0.75/3.75 promocional hasta el 31/12/2026, no 1.50/7.50 (ese es el precio del 01/01/2027 en adelante).",
+    "selector": "La clave 'selector' es el catalogo de modelos que la pantalla de Configuracion IA le ofrece al administrador. Lo consume GET /api/v2/configuracion/ia-config/catalogo-modelos con cache de 1 hora; el API le pone encima el precio, el contexto y la capacidad de imagen que reporta hoy el proveedor (tabla IA_CATALOGO). Editar esta clave cambia lo que ven todos los clientes SIN desplegar API ni frontend. No cambia lo que esta EN USO: eso lo decide 'niveles'."
   },
   "niveles": {
     "basico": {
@@ -21,19 +22,251 @@
     },
     "medio": {
       "provider": "gemini",
-      "modelo": "gemini-2.5-flash",
+      "modelo": "gemini-3.1-flash-lite",
       "max_tokens": 4096,
-      "_precio_usd_1m": "0.30 / 2.50",
+      "_precio_usd_1m": "0.25 / 1.50",
       "_para": "NL->SQL de ventas, sugerencias contables, chat de monitores, cobros/pagos, comprobantes",
-      "_alternativa": "claude-haiku-4-5 (1.00 / 5.00) si se prefiere fiabilidad en la salida estructurada sobre el costo"
+      "_alternativa": "gemini-2.5-flash (0.30 / 2.50) si se prefiere el modelo mas rodado, o claude-haiku-4-5 (1.00 / 5.00) por fiabilidad en la salida estructurada"
     },
     "avanzado": {
       "provider": "gemini",
-      "modelo": "gemini-3.6-flash",
+      "modelo": "gemini-3.7-flash",
       "max_tokens": 8192,
-      "_precio_usd_1m": "1.50 / 7.50",
+      "_precio_usd_1m": "0.75 / 3.75 (promocional hasta el 31/12/2026; despues 1.50 / 7.50)",
       "_para": "OCR Vision de facturas y documentos de terceros, auditoria fiscal, cierre asistido, deteccion de anomalias, analisis de balance, novedades con busqueda web",
-      "_alternativa": "claude-sonnet-5 (2.00 / 10.00, sube a 3.00 / 15.00 el 2026-09-01) o claude-opus-4-8 (5.00 / 25.00) para lo mas critico, si el cliente configura anthropic_api_key"
+      "_alternativa": "gemini-3.6-flash (mismo precio, generacion anterior) o claude-sonnet-5 (2.00 / 10.00) si el cliente configura anthropic_api_key"
     }
-  }
+  },
+  "selector": {
+    "openrouter": [
+      {
+        "n": "basico",
+        "v": "qwen/qwen3.7-flash",
+        "l": "Qwen 3.7 Flash",
+        "img": true,
+        "d": "#1 Básico · el más barato del catálogo · contexto 1M · además lee imágenes"
+      },
+      {
+        "n": "basico",
+        "v": "openai/gpt-oss-120b",
+        "l": "GPT-OSS 120B",
+        "img": false,
+        "d": "#2 Básico · muy económico y rápido · SOLO TEXTO · contexto 131K, suficiente para autofill y ayuda"
+      },
+      {
+        "n": "basico",
+        "v": "openai/gpt-5-nano",
+        "l": "GPT-5 Nano",
+        "img": true,
+        "d": "#3 Básico · salida estructurada de OpenAI · contexto 400K"
+      },
+      {
+        "n": "basico",
+        "v": "z-ai/glm-5.3-flash",
+        "l": "GLM 5.3 Flash ★ nuevo",
+        "img": true,
+        "d": "#4 Básico · publicado el 26/08/2026 · contexto 1.3M y lee imágenes · aún sin uso probado en este ERP"
+      },
+      {
+        "n": "basico",
+        "v": "google/gemini-2.5-flash-lite",
+        "l": "Gemini 2.5 Flash Lite",
+        "img": true,
+        "d": "#5 Básico · el más probado en este ERP · texto, imagen y PDF · contexto 1M"
+      },
+      {
+        "n": "medio",
+        "v": "deepseek/deepseek-v4-flash",
+        "l": "DeepSeek V4 Flash",
+        "img": false,
+        "d": "#1 Medio · recomendado · el mejor para SQL y validaciones al menor costo · bajó 41% de precio en agosto · SOLO TEXTO (el nivel medio no necesita imagen)"
+      },
+      {
+        "n": "medio",
+        "v": "z-ai/glm-5.3-flash",
+        "l": "GLM 5.3 Flash ★ nuevo",
+        "img": true,
+        "d": "#2 Medio · publicado el 26/08/2026 · contexto 1.3M · valide la calidad del SQL antes de dejarlo fijo"
+      },
+      {
+        "n": "medio",
+        "v": "qwen/qwen3.7-flash",
+        "l": "Qwen 3.7 Flash",
+        "img": true,
+        "d": "#3 Medio · el más barato · contexto 1M · valide la calidad del SQL antes de dejarlo fijo"
+      },
+      {
+        "n": "medio",
+        "v": "qwen/qwen3.8-flash",
+        "l": "Qwen 3.8 Flash ★ nuevo",
+        "img": true,
+        "d": "#4 Medio · sucesor del 3.7 (26/08/2026) · más capacidad por 5x el precio del #3"
+      },
+      {
+        "n": "medio",
+        "v": "openai/gpt-5.4-nano",
+        "l": "GPT-5.4 Nano",
+        "img": true,
+        "d": "#5 Medio · alternativa OpenAI consistente · visión y JSON · contexto 400K"
+      },
+      {
+        "n": "medio",
+        "v": "qwen/qwen3.7-plus",
+        "l": "Qwen 3.7 Plus",
+        "img": true,
+        "d": "#6 Medio · escalamiento si los económicos fallan · código, visión y salida estructurada"
+      },
+      {
+        "n": "avanzado",
+        "v": "google/gemini-2.5-flash-lite",
+        "l": "Gemini 2.5 Flash Lite",
+        "img": true,
+        "d": "#1 Avanzado · recomendado · el único probado en este ERP con facturas colombianas reales · multimodal, contexto 1M y económico"
+      },
+      {
+        "n": "avanzado",
+        "v": "z-ai/glm-5.3-flash",
+        "l": "GLM 5.3 Flash ★ nuevo",
+        "img": true,
+        "d": "#2 Avanzado · más barato que el #1 y contexto 1.3M (26/08/2026) · valide la lectura de sus facturas antes de dejarlo fijo"
+      },
+      {
+        "n": "avanzado",
+        "v": "qwen/qwen3.8-flash",
+        "l": "Qwen 3.8 Flash ★ nuevo",
+        "img": true,
+        "d": "#3 Avanzado · multimodal reciente · contexto 1M · alternativa si el #1 falla con documentos difíciles"
+      },
+      {
+        "n": "avanzado",
+        "v": "openai/gpt-5.4-nano",
+        "l": "GPT-5.4 Nano",
+        "img": true,
+        "d": "#4 Avanzado · alternativa OpenAI · útil para tiquetes borrosos o arrugados"
+      },
+      {
+        "n": "avanzado",
+        "v": "minimax/minimax-m3",
+        "l": "MiniMax M3",
+        "img": true,
+        "d": "#5 Avanzado · buena relación capacidad/costo en OCR con JSON · contexto 1M"
+      },
+      {
+        "n": "avanzado",
+        "v": "google/gemini-3.7-flash",
+        "l": "Gemini 3.7 Flash ★ nuevo",
+        "img": true,
+        "d": "#6 Avanzado · el Flash más nuevo de Google (13/08/2026) · para documentos difíciles; ~8x el costo del #1"
+      }
+    ],
+    "gemini": [
+      {
+        "v": "gemini-3.7-flash",
+        "l": "Gemini 3.7 Flash ★ nuevo",
+        "img": true,
+        "d": "El Flash más reciente (13/08/2026) · multimodal, 1M ctx · precio promocional hasta el 31/12/2026"
+      },
+      {
+        "v": "gemini-3.6-flash",
+        "l": "Gemini 3.6 Flash",
+        "img": true,
+        "d": "Generación anterior al 3.7, mismo precio · multimodal, 1M ctx"
+      },
+      {
+        "v": "gemini-3.5-flash-lite",
+        "l": "Gemini 3.5 Flash Lite",
+        "img": true,
+        "d": "Flash Lite de la línea 3.5 · buen balance para volumen medio"
+      },
+      {
+        "v": "gemini-3.1-flash-lite",
+        "l": "Gemini 3.1 Flash Lite",
+        "img": true,
+        "d": "El Flash Lite más económico de la línea 3.x"
+      },
+      {
+        "v": "gemini-3.1-pro-preview",
+        "l": "Gemini 3.1 Pro",
+        "img": true,
+        "d": "Máxima capacidad de Google · razonamiento y análisis profundo"
+      },
+      {
+        "v": "gemini-2.5-flash",
+        "l": "Gemini 2.5 Flash",
+        "img": true,
+        "d": "Estable · balance velocidad / calidad"
+      },
+      {
+        "v": "gemini-2.5-flash-lite",
+        "l": "Gemini 2.5 Flash Lite",
+        "img": true,
+        "d": "Estable · el más probado en este ERP · ideal para autofill y OCR de facturas"
+      },
+      {
+        "v": "gemini-2.5-pro",
+        "l": "Gemini 2.5 Pro",
+        "img": true,
+        "d": "Estable · análisis profundo y razonamiento"
+      }
+    ],
+    "anthropic": [
+      {
+        "v": "claude-haiku-4-5",
+        "l": "Claude Haiku 4.5",
+        "img": true,
+        "d": "El más rápido y económico de Anthropic · 200K ctx · formularios, ayuda y glosas"
+      },
+      {
+        "v": "claude-sonnet-5",
+        "l": "Claude Sonnet 5",
+        "img": true,
+        "d": "Balance de la casa · 1M ctx · análisis, redacción y salida estructurada fiable"
+      },
+      {
+        "v": "claude-opus-4-8",
+        "l": "Claude Opus 4.8",
+        "img": true,
+        "d": "Alta capacidad · 1M ctx · auditoría fiscal y razonamiento contable exigente"
+      },
+      {
+        "v": "claude-opus-5",
+        "l": "Claude Opus 5",
+        "img": true,
+        "d": "Generación más reciente de la gama Opus · 1M ctx"
+      }
+    ],
+    "openai": [
+      {
+        "v": "gpt-5-nano",
+        "l": "GPT-5 Nano",
+        "img": true,
+        "d": "El más económico de OpenAI · autofill y ayuda · 400K ctx"
+      },
+      {
+        "v": "gpt-5.6-luna",
+        "l": "GPT-5.6 Luna ★ nuevo",
+        "img": true,
+        "d": "Económico de la línea 5.6 · multimodal · 1M ctx"
+      },
+      {
+        "v": "gpt-5.4-nano",
+        "l": "GPT-5.4 Nano",
+        "img": true,
+        "d": "Visión y JSON consistente a bajo costo · 400K ctx"
+      },
+      {
+        "v": "gpt-5.4-mini",
+        "l": "GPT-5.4 Mini",
+        "img": true,
+        "d": "Compacto con más capacidad · 400K ctx"
+      },
+      {
+        "v": "gpt-5.6-terra",
+        "l": "GPT-5.6 Terra",
+        "img": true,
+        "d": "Gama alta de la línea 5.6 · análisis complejos · 1M ctx"
+      }
+    ]
+  },
+  "_verificado": "2026-08-29"
 }
